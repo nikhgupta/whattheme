@@ -76,7 +76,7 @@ class ThemesController < ApplicationController
     # if possible, find theme by looking into the contents of these CSS files
     theme_info = ""
     while theme_info.blank? and style_urls.any?
-      theme_info = search_for_wp_theme_info style_urls.shift
+      theme_info = search_for_wp_theme style_urls.shift
     end
 
     # otherwise, find theme by introspecting the url for the CSS files
@@ -94,13 +94,12 @@ class ThemesController < ApplicationController
   # }}}
 
   # search for wordpress theme - main method {{{
-  def search_for_wp_theme_info(css)
+  def search_for_wp_theme(css)
     return if css.blank?
     css = sanitize_url css
     doc = Nokogiri::HTML(open(css)).inner_text
     match = /\/\*(.*theme\s*name.*:.*)\*\//im.match(doc)
     return if match.blank?
-    prepare_info_output match.to_s
     info = []
     match.to_s.each_line do |line|
       line = line.split(':', 2).map { |x| x.strip }
