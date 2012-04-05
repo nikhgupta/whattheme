@@ -37,6 +37,9 @@ gem 'jquery-rails'
 # To use debugger
 # gem 'ruby-debug19', :require => 'ruby-debug'
 
+# gems needed to run this application
+gem 'nokogiri'
+
 group :test do
   gem 'cucumber-rails', require: false
 end

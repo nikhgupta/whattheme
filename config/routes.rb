@@ -1,5 +1,7 @@
 Api::Application.routes.draw do
-  resources :themes
+  root :to => "home#index"
+  match "themes/discover/:url" => "themes#discover", :as => :discover, :defaults => { :format => 'json' }, :url => /[\w.]+/
+  resources :themes, :defaults => { :format => 'json' }
 
   # The priority is based upon order of creation:
   # first created -> highest priority.

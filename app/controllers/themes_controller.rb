@@ -1,83 +1,98 @@
+require 'nokogiri'
+require 'open-uri'
+require 'uri'
 class ThemesController < ApplicationController
-  # GET /themes
-  # GET /themes.json
+
+  respond_to :json
+
+  def discover
+    url = sanitize_url params[:url]
+    myuseragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.142 Safari/535.19"
+    doc = Nokogiri::HTML(open(url, 'User-Agent' => myuseragent))
+    styles = doc.css('link[type="text/css"]')
+
+    style_urls = styles.collect { |style| sanitize_url style.attribute('href'), url }
+
+    theme_info = ""
+    while theme_info.blank?
+      theme_info = search_for_wp_theme_info style_urls.shift
+    end
+
+    if theme_info
+      respond_with prepare_info_output(theme_info)
+    else
+      theme_name = find_theme_by_introspection style_urls
+      #prepare_and_send_info theme_info
+    end
+  end
+
   def index
     @themes = Theme.all
-
-    respond_to do |format|
-      format.html # index.html.erb
-      format.json { render json: @themes }
-    end
+    respond_with @themes
   end
 
-  # GET /themes/1
-  # GET /themes/1.json
   def show
     @theme = Theme.find(params[:id])
-
-    respond_to do |format|
-      format.html # show.html.erb
-      format.json { render json: @theme }
-    end
+    respond_with @theme
   end
 
-  # GET /themes/new
-  # GET /themes/new.json
-  def new
-    @theme = Theme.new
-
-    respond_to do |format|
-      format.html # new.html.erb
-      format.json { render json: @theme }
-    end
-  end
-
-  # GET /themes/1/edit
   def edit
     @theme = Theme.find(params[:id])
+    respond_with @theme
   end
 
-  # POST /themes
-  # POST /themes.json
   def create
     @theme = Theme.new(params[:theme])
-
-    respond_to do |format|
-      if @theme.save
-        format.html { redirect_to @theme, notice: 'Theme was successfully created.' }
-        format.json { render json: @theme, status: :created, location: @theme }
-      else
-        format.html { render action: "new" }
-        format.json { render json: @theme.errors, status: :unprocessable_entity }
-      end
-    end
+    respond_with @theme
   end
 
-  # PUT /themes/1
-  # PUT /themes/1.json
   def update
     @theme = Theme.find(params[:id])
-
-    respond_to do |format|
-      if @theme.update_attributes(params[:theme])
-        format.html { redirect_to @theme, notice: 'Theme was successfully updated.' }
-        format.json { head :no_content }
-      else
-        format.html { render action: "edit" }
-        format.json { render json: @theme.errors, status: :unprocessable_entity }
-      end
-    end
+    @theme.update_attributes(params[:theme])
+    respond_with @theme
   end
 
-  # DELETE /themes/1
-  # DELETE /themes/1.json
   def destroy
     @theme = Theme.find(params[:id])
     @theme.destroy
+    respond_with @theme
+  end
 
-    respond_to do |format|
-      format.html { redirect_to themes_url }
-      format.json { head :no_content }
+  private
+  def sanitize_url(url, relative = "")
+    if relative and URI.parse(url).host.nil?
+      # get the hostname for the relative url (host which is being queried for)
+      host = URI.parse(relative).host
+      # prepend url if we have a relative url
+      url = /^\//.match(url) ? host + url : relative + url
+    end
+    # prepend scheme if it is missing one.. use URI class?
+    url = /^http/.match(url) ? url : "http://#{url}"
+
+    # return
+    url
+  end
+
+  def search_for_wp_theme_info(css)
+    return if css.nil?
+    doc = Nokogiri::HTML(open(css))
+    /\/\*(.*theme.*name.*:.*)\*\//im.match(doc).to_s
+  end
+
+  def prepare_info_output(info)
+    newinfo = []
+    info.each_line do |line|
+      line = line.split(':', 2).map { |x| x.strip }
+      newinfo << { :key => line[0], :value => line[1] } unless line[1].blank?
+    end
+    newinfo
+  end
+
+  def find_theme_by_introspection(style_urls)
+    style_urls.each do |css|
+      match = /.*\/themes\/(.*)\/.*/i.match(css)
+      puts css, match
+      return match.to_s if match
     end
   end
 end
