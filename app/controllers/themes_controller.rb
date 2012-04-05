@@ -8,7 +8,11 @@ class ThemesController < ApplicationController
   respond_to :json
 
   def discover
-    @theme = discover_wp_theme params[:url]
+    begin
+      @theme = discover_wp_theme params[:url]
+    rescue Exception => e
+      @theme = { "success" => false, "message" => e.to_s }
+    end
     respond_with @theme
   end
 
@@ -47,7 +51,6 @@ class ThemesController < ApplicationController
 
 
   private
-
   # Discover WordPress Theme {{{
   # This function discovers the theme for a given WordPress website.
   # Right now, it is custom tailored to use WordPress websites and
@@ -74,7 +77,6 @@ class ThemesController < ApplicationController
 
     @info = {"success" => true, "uri" => url, "title" => doc.xpath("//title").first.inner_text.to_s }
 
-
     # search for all CSS links on this page
     styles = doc.css('link[type="text/css"]')
     style_urls = styles.collect { |style| sanitize_url(style.attribute('href').to_s, url) }
@@ -100,7 +102,7 @@ class ThemesController < ApplicationController
   def search_for_wp_theme(css)
     return if css.blank?
     doc = Nokogiri::HTML(open(css)).inner_text
-    match = /\/\*(.*theme\s*name.*:.*)\*\//im.match(doc)
+    match = /\/\*(.*?theme\s*name.*?:.*?)\*\//im.match(doc)
     return if match.blank?
     match.to_s.each_line do |line|
       line = line.split(':', 2).map { |x| x.strip }
@@ -137,13 +139,14 @@ class ThemesController < ApplicationController
     end
     true
   end
-  # }}} 
+  # }}}
   # display a nicely formatted reply - WordPress {{{
   def reply_nicely_for_wordpress
+    @info['keywords'] = wp_keyword if @info["success"]
     if @info["success"]
       button   = [ "Take me to Theme's Website",  @info['theme_uri' ]] if @info['theme_uri']
       button   = [ "Take me to Author's Website", @info['author_uri']] if @info['author_uri']
-      button   = [ "I'm feeling lucky!", search_google_for_theme_info(wp_keyword) ] if button.blank?
+      google_search = search_google_for_theme_info
       message  = "Seems like this site: <a href='#{@info['uri']}'>#{@info['title']}</a> is using "
       message += "version: #{@info['version']} of the " if @info['version']
       if @info['theme_name']
@@ -155,9 +158,11 @@ class ThemesController < ApplicationController
         message += "<a href='#{@info['author_uri']}'>#{@info['author']}</a>" if @info['author_uri']
         message += "#{@info['author']}" unless @info['author_uri']
       end
+      message += ", and is based on template: #{@info['template']}"
       message += ".<br/><br/>"
       message += "The description for the theme says: #{@info['description']}.<br/><br/>" if @info['description']
-      message += "<a href='#{button[1]}' class='button green close'><img src='#{Api::Application.config.myHostURI}/assets/tick.png'>#{button[0]}</a>"
+      message += "<a href='#{button[1]}' class='button green close' target='_blank'><img src='#{Api::Application.config.myHostURI}/assets/tick.png'>#{button[0]}</a><br/>" unless button.blank?
+      message += "<a href='#{google_search}' class='button green close' target='_blank'><img src='#{Api::Application.config.myHostURI}/assets/tick.png'>I'm feeling lucky!</a>" unless google_search.blank?
     else
       message  = case @info["code"]
                  when "not_wordpress"    then "Are you sure, the given site is a WordPress blog?"
@@ -167,18 +172,14 @@ class ThemesController < ApplicationController
     @info.merge!({"message" => message})
   end
   # }}}
-  
   # generate a keyword to search by {{{
   def wp_keyword
-    keyword  = "#{@info['theme_name']}"
-    if @info['author_name']
-      keyword += @info['author_name']
-    else
-      keyword  = "wordpress themes #{keyword}"
-    end
+    keyword  = ""
+    keyword += "#{@info['template']} " if @info['template']
+    keyword += "#{@info['author']} " if @info['author']
+    keyword  = "wordpress themes #{keyword}#{@info['theme_name']}"
   end
   # }}}
-
   # know if a wordpress theme has been found {{{
   def wp_theme_found?
     @info.has_key?("theme_name")
@@ -186,36 +187,37 @@ class ThemesController < ApplicationController
   # }}}
 # }}}
 
-# global helpers {{{
-  # get absolute url and sanitize it. {{{
-  def sanitize_url(url, relative = "")
-    if !relative.blank? and URI.parse(url).host.nil?
-      # get the hostname for the relative url (host which is being queried for)
-      relative = append_scheme(relative)
-      host = URI.parse(relative).host
-      # prepend url if we have a relative url
-      url = /^\//.match(url) ? host + url : relative + "/" + url
+  # global helpers {{{
+    # get absolute url and sanitize it. {{{
+    def sanitize_url(url, relative = "")
+      return "http:#{url}" if /^\/\//.match(url)
+      if !relative.blank? and URI.parse(url).host.nil?
+        # get the hostname for the relative url (host which is being queried for)
+        relative = append_scheme(relative)
+        host = URI.parse(relative).host
+        # prepend url if we have a relative url
+        url = /^\//.match(url) ? host + url : relative + "/" + url
+      end
+      # prepend scheme if it is missing one.. use URI class?
+      append_scheme url
     end
-    # prepend scheme if it is missing one.. use URI class?
-    append_scheme url
-  end
+    # }}}
+    # append URL Scheme to any given URL if none found {{{
+    def append_scheme(url)
+      return "" if url.blank?
+      /^http/.match(url) ? url : "http://#{url}"
+    end
+    # }}}
+    # search google for keyword {{{
+    def search_google_for_theme_info
+      return if @info['keywords'].blank?
+      url = "http://www.google.com/search?q=#{CGI::escape(@info['keywords'].gsub(' ','+'))}"
+      doc = Nokogiri::HTML(open(url))
+      url = doc.css("#ires .g .r a").first.attribute('href').to_s
+      params = CGI::parse URI.parse(url).query
+      params["q"].first
+    end
+    # }}}
   # }}}
-  # append URL Scheme to any given URL if none found {{{
-  def append_scheme(url)
-    return "" if url.blank?
-    /^http/.match(url) ? url : "http://#{url}"
-  end
-  # }}}
-  
-  # search google for keyword {{{
-  def search_google_for_theme_info(keyword)
-    url = "http://www.google.com/search?q=#{CGI::escape(keyword.gsub(' ','+'))}"
-    doc = Nokogiri::HTML(open(url))
-    url = doc.css("#ires .g .r a").first.attribute('href').to_s
-    params = CGI::parse URI.parse(url).query
-    params["q"].first
-  end
-  # }}}
-# }}}
 
 end
