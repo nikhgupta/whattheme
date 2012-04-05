@@ -1,6 +1,8 @@
 require 'nokogiri'
 require 'open-uri'
 require 'uri'
+require 'cgi'
+
 class ThemesController < ApplicationController
 
   respond_to :json
@@ -70,48 +72,43 @@ class ThemesController < ApplicationController
     @myuseragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.142 Safari/535.19"
     doc = Nokogiri::HTML(open(url, 'User-Agent' => @myuseragent))
 
+    @info = {"success" => true, "uri" => url, "title" => doc.xpath("//title").first.inner_text.to_s }
+
+
     # search for all CSS links on this page
     styles = doc.css('link[type="text/css"]')
     style_urls = styles.collect { |style| sanitize_url(style.attribute('href').to_s, url) }
 
     # if possible, find theme by looking into the contents of these CSS files
-    theme_info = ""
-    while theme_info.blank? and style_urls.any?
-      theme_info = search_for_wp_theme style_urls.shift
+    while !wp_theme_found? and style_urls.any?
+      search_for_wp_theme sanitize_url(style_urls.shift)
     end
 
     # otherwise, find theme by introspecting the url for the CSS files
-    theme_info = search_for_wp_theme_by_introspection styles, url if theme_info.blank?
+    search_for_wp_theme_by_introspection(styles, url) unless wp_theme_found?
 
     # if we still do not have theme information, return error state
-    if theme_info.blank?
-      theme_info = [ {"success" => false} ]
-      if search_for_existence_wp url
-        theme_info << {"code" => "customized_theme" }
-      else
-        theme_info << {"code" => "not_wordpress"}
-      end
+    unless wp_theme_found?
+      @info["success"] = false
+      @info["code"]    = "not_wordpress"
+      @info["code"]    = "customized_theme" if search_for_existence_wp url
     end
-    theme_info
+    reply_nicely_for_wordpress
   end
   # }}}
-
   # search for wordpress theme - main method {{{
   def search_for_wp_theme(css)
     return if css.blank?
-    css = sanitize_url css
     doc = Nokogiri::HTML(open(css)).inner_text
     match = /\/\*(.*theme\s*name.*:.*)\*\//im.match(doc)
     return if match.blank?
-    info = [{"success" => true}]
     match.to_s.each_line do |line|
       line = line.split(':', 2).map { |x| x.strip }
-      info << { line[0].gsub(' ','_').downcase => line[1] } unless line[1].blank?
+      @info[line[0].gsub(' ','_').downcase] = line[1] unless line[1].blank?
     end
-    info << { "cms" => "WordPress" }
+    @info["cms"] = "WordPress"
   end
   # }}}
-
   # search for wordpress theme - introspection method {{{
   def search_for_wp_theme_by_introspection(styles, url)
     styles.each do |style|
@@ -119,15 +116,13 @@ class ThemesController < ApplicationController
       match = css.match(/.*\/themes\/(.*)\/.*/i)
       # return if we have a match
       next if match.blank?
-      return [
-        {"success"    => true },
-        {"theme_name" => match[1].to_s },
-        {"theme_uri"  => URI.parse(url).host },
-        {"cms"        => "WordPress" },
-        {"method"     => "introspection" },
-      ]
+      @info.merge!({
+        "success"    => true,
+        "theme_name" => match[1].to_s,
+        "cms"        => "WordPress",
+        "method"     => "introspection",
+      })
     end
-    nil
   end
 
   def search_for_existence_wp(sanitized_url)
@@ -142,10 +137,57 @@ class ThemesController < ApplicationController
     end
     true
   end
+  # }}} 
+  # display a nicely formatted reply - WordPress {{{
+  def reply_nicely_for_wordpress
+    if @info["success"]
+      button   = [ "Take me to Theme's Website",  @info['theme_uri' ]] if @info['theme_uri']
+      button   = [ "Take me to Author's Website", @info['author_uri']] if @info['author_uri']
+      button   = [ "I'm feeling lucky!", search_google_for_theme_info(wp_keyword) ] if button.blank?
+      message  = "Seems like this site: <a href='#{@info['uri']}'>#{@info['title']}</a> is using "
+      message += "version: #{@info['version']} of the " if @info['version']
+      if @info['theme_name']
+        message += "<a href='#{@info['theme_uri']}'>#{@info['theme_name']}</a> theme" if @info['theme_uri']
+        message += "#{@info['theme_name']} theme" unless @info['theme_uri']
+      end
+      if @info['author']
+        message += ", which is created by "
+        message += "<a href='#{@info['author_uri']}'>#{@info['author']}</a>" if @info['author_uri']
+        message += "#{@info['author']}" unless @info['author_uri']
+      end
+      message += ".<br/><br/>"
+      message += "The description for the theme says: #{@info['description']}.<br/><br/>" if @info['description']
+      message += "<a href='#{button[1]}' class='button green close'><img src='#{Api::Application.config.myHostURI}/assets/tick.png'>#{button[0]}</a>"
+    else
+      message  = case @info["code"]
+                 when "not_wordpress"    then "Are you sure, the given site is a WordPress blog?"
+                 when "customized_theme" then "Seems like this WordPress blog is using a customized theme!"
+                 end
+    end
+    @info.merge!({"message" => message})
+  end
+  # }}}
+  
+  # generate a keyword to search by {{{
+  def wp_keyword
+    keyword  = "#{@info['theme_name']}"
+    if @info['author_name']
+      keyword += @info['author_name']
+    else
+      keyword  = "wordpress themes #{keyword}"
+    end
+  end
+  # }}}
+
+  # know if a wordpress theme has been found {{{
+  def wp_theme_found?
+    @info.has_key?("theme_name")
+  end
   # }}}
 # }}}
 
-  # get absolute url and sanitize it.
+# global helpers {{{
+  # get absolute url and sanitize it. {{{
   def sanitize_url(url, relative = "")
     if !relative.blank? and URI.parse(url).host.nil?
       # get the hostname for the relative url (host which is being queried for)
@@ -157,10 +199,23 @@ class ThemesController < ApplicationController
     # prepend scheme if it is missing one.. use URI class?
     append_scheme url
   end
-
+  # }}}
+  # append URL Scheme to any given URL if none found {{{
   def append_scheme(url)
     return "" if url.blank?
     /^http/.match(url) ? url : "http://#{url}"
   end
+  # }}}
+  
+  # search google for keyword {{{
+  def search_google_for_theme_info(keyword)
+    url = "http://www.google.com/search?q=#{CGI::escape(keyword.gsub(' ','+'))}"
+    doc = Nokogiri::HTML(open(url))
+    url = doc.css("#ires .g .r a").first.attribute('href').to_s
+    params = CGI::parse URI.parse(url).query
+    params["q"].first
+  end
+  # }}}
+# }}}
 
 end
