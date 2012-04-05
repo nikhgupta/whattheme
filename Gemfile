@@ -36,7 +36,6 @@ gem 'jquery-rails'
 
 # gems needed to run this application
 gem 'nokogiri'
-gem 'mysql2'
 
 group :test do
   gem 'cucumber-rails', require: false
@@ -47,6 +46,7 @@ group :production do
 end
 
 group :test, :development do
+  gem 'mysql2'
   gem 'heroku'
   gem "taps"
   gem 'turn'
