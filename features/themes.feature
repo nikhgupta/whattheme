@@ -12,4 +12,10 @@ Feature: What Theme
     Given I am on the themes page
     Then  the page should be in "json" format
 
-  Scenario: JSON and XML should be the only formats allowed
+  Scenario: Should return theme information using Stylesheets
+    Given I discover theme information for "nikhgupta.com"
+    Then  I should see "Quattro"
+
+  Scenario: Should return theme information using Introspection
+    Given I discover theme information for "wordpress.com"
+    Then  I should see "WordPress"

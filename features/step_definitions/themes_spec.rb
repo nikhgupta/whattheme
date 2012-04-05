@@ -9,3 +9,7 @@ end
 Then /^the page should be in "([^"]*)" format$/ do |format|
   page.response_headers['Content-Type'].should have_content format
 end
+
+Given /^I discover theme information for "([^"]*)"$/ do |url|
+  visit discover_path(:url => url)
+end

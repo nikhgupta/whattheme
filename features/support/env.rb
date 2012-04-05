@@ -8,7 +8,6 @@ require 'cucumber/rails'
 require 'capybara/rails'
 require 'capybara/cucumber'
 require 'capybara/session'
-require "json_spec/cucumber"
 require "factory_girl/step_definitions"
 
 # Capybara defaults to XPath selectors rather than Webrat's default of CSS3. In
