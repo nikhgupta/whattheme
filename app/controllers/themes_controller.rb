@@ -52,6 +52,7 @@ class ThemesController < ApplicationController
   # reject others. However, in practice, it should call another function
   # which first tests what kind of cms we are using and based on that
   # calls the corresponding discover sublet.
+  # Also, identify wp.com : http://www.quora.com/How-to-identify-sites-that-using-WordPress-org-and-WordPress-com-hosted
   #
   # * *Args*    :
   #   - +url+ -> the url to search for the wordpress theme
@@ -66,8 +67,8 @@ class ThemesController < ApplicationController
     url = sanitize_url url
 
     # use a user-agent string when using Nokogiri for fetching pages
-    myuseragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.142 Safari/535.19"
-    doc = Nokogiri::HTML(open(url, 'User-Agent' => myuseragent))
+    @myuseragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.142 Safari/535.19"
+    doc = Nokogiri::HTML(open(url, 'User-Agent' => @myuseragent))
 
     # search for all CSS links on this page
     styles = doc.css('link[type="text/css"]')
@@ -82,14 +83,16 @@ class ThemesController < ApplicationController
     # otherwise, find theme by introspecting the url for the CSS files
     theme_info = search_for_wp_theme_by_introspection styles, url if theme_info.blank?
 
-    puts theme_info
-
-    # if we have theme information, output it
-    if theme_info
-      theme_info
-    else
-      # raise an error
+    # if we still do not have theme information, return error state
+    if theme_info.blank?
+      theme_info = [ {"success" => false} ]
+      if search_for_existence_wp url
+        theme_info << {"code" => "customized_theme" }
+      else
+        theme_info << {"code" => "not_wordpress"}
+      end
     end
+    theme_info
   end
   # }}}
 
@@ -100,12 +103,12 @@ class ThemesController < ApplicationController
     doc = Nokogiri::HTML(open(css)).inner_text
     match = /\/\*(.*theme\s*name.*:.*)\*\//im.match(doc)
     return if match.blank?
-    info = []
+    info = [{"success" => true}]
     match.to_s.each_line do |line|
       line = line.split(':', 2).map { |x| x.strip }
-      info << { :key => line[0], :value => line[1] } unless line[1].blank?
+      info << { line[0].gsub(' ','_').downcase => line[1] } unless line[1].blank?
     end
-    info << { :key => "CMS", :value => "WordPress" }
+    info << { "cms" => "WordPress" }
   end
   # }}}
 
@@ -114,32 +117,50 @@ class ThemesController < ApplicationController
     styles.each do |style|
       css = style.attribute('href').to_s
       match = css.match(/.*\/themes\/(.*)\/.*/i)
-      unless match[1].blank?
-        return [
-          {:key => "Theme Name", :value => match[1].to_s },
-          {:key => "Theme URI",  :value => URI.parse(url).host },
-          {:key => "CMS", :value => "WordPress" },
-          {:key => "method",  :value => "introspection" },
-        ]
-      end
+      # return if we have a match
+      next if match.blank?
+      return [
+        {"success"    => true },
+        {"theme_name" => match[1].to_s },
+        {"theme_uri"  => URI.parse(url).host },
+        {"cms"        => "WordPress" },
+        {"method"     => "introspection" },
+      ]
     end
+    nil
+  end
+
+  def search_for_existence_wp(sanitized_url)
+    sanitized_url = URI.parse(sanitized_url)
+    loginurl = "#{sanitized_url.scheme}://#{sanitized_url.host}/wp-admin"
+    begin
+      open loginurl, 'User-Agent' => @myuseragent
+    rescue OpenURI::HTTPError => e
+      return false
+    rescue Exception => e
+      return false
+    end
+    true
   end
   # }}}
 # }}}
 
   # get absolute url and sanitize it.
   def sanitize_url(url, relative = "")
-    if relative and URI.parse(url).host.nil?
+    if !relative.blank? and URI.parse(url).host.nil?
       # get the hostname for the relative url (host which is being queried for)
+      relative = append_scheme(relative)
       host = URI.parse(relative).host
       # prepend url if we have a relative url
-      url = /^\//.match(url) ? host + url : relative + url
+      url = /^\//.match(url) ? host + url : relative + "/" + url
     end
     # prepend scheme if it is missing one.. use URI class?
-    url = /^http/.match(url) ? url : "http://#{url}"
+    append_scheme url
+  end
 
-    # return
-    url
+  def append_scheme(url)
+    return "" if url.blank?
+    /^http/.match(url) ? url : "http://#{url}"
   end
 
 end

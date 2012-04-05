@@ -5,7 +5,7 @@ Feature: What Theme
 
   @pending
   Scenario: API Home should list Documentation for API
-    Given I am on the home page
+    Given PENDING I am on the home page
     Then  I should see "Documentation"
 
   Scenario: JSON should be the default format
@@ -18,4 +18,15 @@ Feature: What Theme
 
   Scenario: Should return theme information using Introspection
     Given I discover theme information for "wordpress.com"
-    Then  I should see "WordPress"
+    Then  I should see ":true"
+    Then  I should see "h4"
+
+  Scenario: Should return error state when a theme can not be discovered
+    Given I discover theme information for "wordpress.org"
+    Then  I should see ":false"
+    And   I should see "customized_theme"
+
+  Scenario: Should return error state when we have a non-wordpress based site
+    Given I discover theme information for "whattheme.net"
+    Then  I should see ":false"
+    And   I should see "not_wordpress"
