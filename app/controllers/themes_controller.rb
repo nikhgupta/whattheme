@@ -200,7 +200,11 @@ class ThemesController < ApplicationController
     # get absolute url and sanitize it. {{{
     def sanitize_url(url, relative = "")
       url = url.split('?', 2)
-      url = url.first + CGI::escape(url.last) if url.count > 1
+      if url.count > 1
+         url = url.first + '?' + CGI::escape(url.last)
+      else
+        url = url.first
+      end
       return "http:#{url}" if /^\/\//.match(url)
       if !relative.blank? and URI.parse(url).host.nil?
         # get the hostname for the relative url (host which is being queried for)
