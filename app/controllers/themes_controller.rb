@@ -13,44 +13,51 @@ class ThemesController < ApplicationController
     rescue Exception => e
       @theme = { "success" => false, "message" => e.to_s }
     end
-    respond_with @theme
+    render_json @theme, params
   end
 
   def index
     @themes = Theme.all
-    respond_with @themes
+    render_json @themes, params
   end
 
   def show
     @theme = Theme.find(params[:id])
-    respond_with @theme
+    render_json @theme, params
   end
 
   def edit
     @theme = Theme.find(params[:id])
-    respond_with @theme
+    render_json @theme, params
   end
 
   def create
     @theme = Theme.new(params[:theme])
-    respond_with @theme
+    render_json @theme, params
   end
 
   def update
     @theme = Theme.find(params[:id])
     @theme.update_attributes(params[:theme])
-    respond_with @theme
+    render_json @theme, params
   end
 
   def destroy
     @theme = Theme.find(params[:id])
     @theme.destroy
-    respond_with @theme
+    render_json @theme, params
   end
 
 
 
   private
+  def render_json(object, params)
+    if params[:callback]
+      render :json => object, :callback => params[:callback]
+    else
+      respond_with object
+    end
+  end
   # Discover WordPress Theme {{{
   # This function discovers the theme for a given WordPress website.
   # Right now, it is custom tailored to use WordPress websites and
@@ -75,7 +82,9 @@ class ThemesController < ApplicationController
     @myuseragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.142 Safari/535.19"
     doc = Nokogiri::HTML(open(url, 'User-Agent' => @myuseragent))
 
-    @info = {"success" => true, "uri" => url, "title" => doc.xpath("//title").first.inner_text.to_s }
+    @info = {"success" => true, "uri" => url}
+    title = doc.xpath("//title").first
+    @info["title"] = title.inner_text.to_s unless title.blank?
 
     # search for all CSS links on this page
     styles = doc.css('link[type="text/css"]')
@@ -158,10 +167,10 @@ class ThemesController < ApplicationController
         message += "<a href='#{@info['author_uri']}'>#{@info['author']}</a>" if @info['author_uri']
         message += "#{@info['author']}" unless @info['author_uri']
       end
-      message += ", and is based on template: #{@info['template']}"
+      message += ", and is based on template: #{@info['template']}" if @info['template']
       message += ".<br/><br/>"
       message += "The description for the theme says: #{@info['description']}.<br/><br/>" if @info['description']
-      message += "<a href='#{button[1]}' class='button green close' target='_blank'><img src='#{Api::Application.config.myHostURI}/assets/tick.png'>#{button[0]}</a><br/>" unless button.blank?
+      message += "<a href='#{button[1]}' class='button green close' target='_blank'><img src='#{Api::Application.config.myHostURI}/assets/tick.png'>#{button[0]}</a>" unless button.blank?
       message += "<a href='#{google_search}' class='button green close' target='_blank'><img src='#{Api::Application.config.myHostURI}/assets/tick.png'>I'm feeling lucky!</a>" unless google_search.blank?
     else
       message  = case @info["code"]
