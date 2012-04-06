@@ -124,7 +124,7 @@ class ThemesController < ApplicationController
   def search_for_wp_theme_by_introspection(styles, url)
     styles.each do |style|
       css = style.attribute('href').to_s
-      match = css.match(/.*\/themes\/(.*)\/.*/i)
+      match = css.match(/.*\/wp-content\/themes\/(.*?)\/.*/i)
       # return if we have a match
       next if match.blank?
       @info.merge!({
