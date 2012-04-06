@@ -153,8 +153,8 @@ class ThemesController < ApplicationController
   def reply_nicely_for_wordpress
     @info['keywords'] = wp_keyword if @info["success"]
     if @info["success"]
-      button   = [ "Take me to Theme's Website",  @info['theme_uri' ]] if @info['theme_uri']
       button   = [ "Take me to Author's Website", @info['author_uri']] if @info['author_uri']
+      button   = [ "Take me to Theme's Website",  @info['theme_uri' ]] if @info['theme_uri']
       google_search = search_google_for_theme_info
       message  = "Seems like this site: <a href='#{@info['uri']}'>#{@info['title']}</a> is using "
       message += "version: #{@info['version']} of the " if @info['version']
