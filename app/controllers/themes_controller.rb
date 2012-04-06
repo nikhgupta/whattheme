@@ -11,7 +11,7 @@ class ThemesController < ApplicationController
     begin
       @theme = discover_wp_theme params[:url]
     rescue Exception => e
-      @theme = { "success" => false, "message" => e.to_s }
+      @theme = { "success" => false, "message" => "Encountered an error: #{e.to_s}" }
     end
     render_json @theme, params
   end
@@ -199,6 +199,8 @@ class ThemesController < ApplicationController
   # global helpers {{{
     # get absolute url and sanitize it. {{{
     def sanitize_url(url, relative = "")
+      url[' '] = '%20'; url['|'] = '%7C'; url[','] = '%2C';
+      url['.'] = '%2E'; url['#'] = '%23'; url['+'] = '%2B';
       return "http:#{url}" if /^\/\//.match(url)
       if !relative.blank? and URI.parse(url).host.nil?
         # get the hostname for the relative url (host which is being queried for)
