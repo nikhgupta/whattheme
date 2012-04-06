@@ -1,0 +1,27 @@
+%p#notice= notice
+
+%p
+  %b Title:
+  = @theme.title
+%p
+  %b Url:
+  = @theme.url
+%p
+  %b Author:
+  = @theme.author
+%p
+  %b Author url:
+  = @theme.author_url
+%p
+  %b Description:
+  = @theme.description
+%p
+  %b Version:
+  = @theme.version
+%p
+  %b Cms:
+  = @theme.cms
+
+= link_to 'Edit', edit_theme_path(@theme)
+\|
+= link_to 'Back', themes_path

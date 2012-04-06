@@ -1,0 +1,31 @@
+%h1 Listing themes
+
+%table
+  %tr
+    %th Title
+    %th Url
+    %th Author
+    %th Author url
+    %th Description
+    %th Version
+    %th Cms
+    %th
+    %th
+    %th
+
+  - @themes.each do |theme|
+    %tr
+      %td= theme.title
+      %td= theme.url
+      %td= theme.author
+      %td= theme.author_url
+      %td= theme.description
+      %td= theme.version
+      %td= theme.cms
+      %td= link_to 'Show', theme
+      %td= link_to 'Edit', edit_theme_path(theme)
+      %td= link_to 'Destroy', theme, :confirm => 'Are you sure?', :method => :delete
+
+%br
+
+= link_to 'New Theme', new_theme_path

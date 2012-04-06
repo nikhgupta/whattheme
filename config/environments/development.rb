@@ -34,4 +34,7 @@ Api::Application.configure do
 
   # Expands the lines which load the assets
   config.assets.debug = true
+
+  # Host URI
+  config.myHostURI = "http://localhost:3000"
 end
