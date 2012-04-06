@@ -199,8 +199,8 @@ class ThemesController < ApplicationController
   # global helpers {{{
     # get absolute url and sanitize it. {{{
     def sanitize_url(url, relative = "")
-      url[' '] = '%20'; url['|'] = '%7C'; url[','] = '%2C';
-      url['.'] = '%2E'; url['#'] = '%23'; url['+'] = '%2B';
+      url = url.split('?', 2)
+      url = url.first + CGI::escape(url.last) if url.count > 1
       return "http:#{url}" if /^\/\//.match(url)
       if !relative.blank? and URI.parse(url).host.nil?
         # get the hostname for the relative url (host which is being queried for)
