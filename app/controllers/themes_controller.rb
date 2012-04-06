@@ -170,8 +170,8 @@ class ThemesController < ApplicationController
       message += ", and is based on template: #{@info['template']}" if @info['template']
       message += ".<br/><br/>"
       message += "The description for the theme says: #{@info['description']}.<br/><br/>" if @info['description']
-      message += "<a href='#{button[1]}' class='button green close' target='_blank'><img src='#{Api::Application.config.myHostURI}/assets/tick.png'>#{button[0]}</a>" unless button.blank?
-      message += "<a href='#{google_search}' class='button green close' target='_blank'><img src='#{Api::Application.config.myHostURI}/assets/tick.png'>I'm feeling lucky!</a>" unless google_search.blank?
+      message += "<a href='#{button[1]}' class='button green close' target='_blank'><img src='http://whattheme.net/assets/tick.png'>#{button[0]}</a>" unless button.blank?
+      message += "<a href='#{google_search}' class='button green close' target='_blank'><img src='http://whattheme.net/assets/tick.png'>I'm feeling lucky!</a>" unless google_search.blank?
     else
       message  = case @info["code"]
                  when "not_wordpress"    then "Are you sure, the given site is a WordPress blog?"
