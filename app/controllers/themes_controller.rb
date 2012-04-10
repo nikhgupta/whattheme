@@ -104,9 +104,12 @@ class ThemesController < ApplicationController
       @info["code"]    = "not_wordpress"
       @info["code"]    = "customized_theme" if search_for_existence_wp url
     end
+
+    # make some more changes on the final results we are getting from automated methods
     @info['theme_name'] = "WordPress VIP Services" if @info['theme_name'] == 'vip'
-    @info['title'] = @info['title'][0..55] + "&hellip;"
+    @info['title'] = @info['title'][0..25] + "&hellip;"
     @info['keywords'] = wp_keyword if @info["success"]
+
     reply_nicely_for_wordpress
   end
   # }}}
