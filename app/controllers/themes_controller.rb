@@ -156,22 +156,24 @@ class ThemesController < ApplicationController
       button   = [ "Take me to Author's Website", @info['author_uri']] if @info['author_uri']
       button   = [ "Take me to Theme's Website",  @info['theme_uri' ]] if @info['theme_uri']
       google_search = search_google_for_theme_info
-      message  = "Seems like this site: <a href='#{@info['uri']}'>#{@info['title']}</a> is using "
-      message += "version: #{@info['version']} of the " if @info['version']
+      message  = "<a href='#{@info['uri']}'>#{@info['title']}</a> is using "
+      message += "version #{@info['version']} of the " if @info['version']
       if @info['theme_name']
         message += "<a href='#{@info['theme_uri']}'>#{@info['theme_name']}</a> theme" if @info['theme_uri']
         message += "#{@info['theme_name']} theme" unless @info['theme_uri']
       end
       if @info['author']
-        message += ", which is created by "
+        message += " created by "
         message += "<a href='#{@info['author_uri']}'>#{@info['author']}</a>" if @info['author_uri']
         message += "#{@info['author']}" unless @info['author_uri']
       end
-      message += ", and is based on template: #{@info['template']}" if @info['template']
+      #message += ", and is based on #{@info['template']} template" if @info['template']
       message += ".<br/><br/>"
-      message += "The description for the theme says: #{@info['description']}.<br/><br/>" if @info['description']
+      #message += "The description for the theme says: #{@info['description']}.<br/><br/>" if @info['description']
+      message += "<div style='position: absolute; bottom: 30px'>"
       message += "<a href='#{button[1]}' class='button green close' target='_blank'><img src='http://whattheme.net/images/tick.png'>#{button[0]}</a>" unless button.blank?
       message += "<a href='#{google_search}' class='button green close' target='_blank'><img src='http://whattheme.net/images/tick.png'>I'm feeling lucky!</a>" unless google_search.blank?
+      message += "</div>"
     else
       message  = case @info["code"]
                  when "not_wordpress"    then "Are you sure, the given site is a WordPress blog?"
