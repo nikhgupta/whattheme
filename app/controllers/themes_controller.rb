@@ -153,8 +153,10 @@ class ThemesController < ApplicationController
   def reply_nicely_for_wordpress
     @info['keywords'] = wp_keyword if @info["success"]
     if @info["success"]
-      button   = [ "Take me to Author's Website", @info['author_uri']] if @info['author_uri']
-      button   = [ "Take me to Theme's Website",  @info['theme_uri' ]] if @info['theme_uri']
+      #button   = [ "Take me to Author's Website", @info['author_uri']] if @info['author_uri']
+      button   = [ "Grab this theme", @info['author_uri']] if @info['author_uri']
+      #button   = [ "Take me to Theme's Website",  @info['theme_uri' ]] if @info['theme_uri']
+      button   = [ "Grab this theme",  @info['theme_uri' ]] if @info['theme_uri']
       google_search = search_google_for_theme_info
       message  = "<a href='#{@info['uri']}'>#{@info['title']}</a> is using "
       message += "version #{@info['version']} of the " if @info['version']
@@ -171,8 +173,8 @@ class ThemesController < ApplicationController
       message += ".<br/><br/>"
       #message += "The description for the theme says: #{@info['description']}.<br/><br/>" if @info['description']
       message += "<div style='position: absolute; bottom: 30px'>"
-      message += "<a href='#{button[1]}' class='button green close' target='_blank'><img src='http://whattheme.net/images/tick.png'>#{button[0]}</a>" unless button.blank?
-      message += "<a href='#{google_search}' class='button green close' target='_blank'><img src='http://whattheme.net/images/tick.png'>I'm feeling lucky!</a>" unless google_search.blank?
+      message += "<a href='#{button[1]}' class='button green close' target='_blank'>#{button[0]}</a>" unless button.blank?
+      message += "<a href='#{google_search}' class='button green close' target='_blank'>Grab this theme</a>" if button.blank? and google_search
       message += "</div>"
     else
       message  = case @info["code"]
