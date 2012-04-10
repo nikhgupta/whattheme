@@ -104,6 +104,9 @@ class ThemesController < ApplicationController
       @info["code"]    = "not_wordpress"
       @info["code"]    = "customized_theme" if search_for_existence_wp url
     end
+    @info['theme_name'] = "WordPress VIP Services" if @info['theme_name'] == 'vip'
+    @info['title'] = @info['title'][0..55] + "&hellip;"
+    @info['keywords'] = wp_keyword if @info["success"]
     reply_nicely_for_wordpress
   end
   # }}}
@@ -151,9 +154,7 @@ class ThemesController < ApplicationController
   # }}}
   # display a nicely formatted reply - WordPress {{{
   def reply_nicely_for_wordpress
-    @info['keywords'] = wp_keyword if @info["success"]
     if @info["success"]
-      @info['theme_name'] = "WordPress VIP Services" if @info['theme_name'] == 'vip'
       #button   = [ "Take me to Author's Website", @info['author_uri']] if @info['author_uri']
       button   = [ "Grab this theme", @info['author_uri']] if @info['author_uri']
       #button   = [ "Take me to Theme's Website",  @info['theme_uri' ]] if @info['theme_uri']
