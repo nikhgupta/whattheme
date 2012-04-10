@@ -15,7 +15,7 @@ development:
   database: __api_development
   pool: 5
   username: root
-  password:
+  password: password
   socket: /tmp/mysql.sock
 
 # Warning: The database defined as "test" will be erased and
@@ -28,7 +28,7 @@ test: &test
   database: __api_test
   pool: 5
   username: root
-  password:
+  password: password
   socket: /tmp/mysql.sock
 
 production:
@@ -38,7 +38,7 @@ production:
   database: __api_production
   pool: 5
   username: root
-  password:
+  password: password
   socket: /tmp/mysql.sock
 
 cucumber:
