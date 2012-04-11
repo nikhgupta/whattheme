@@ -163,7 +163,8 @@ class ThemesController < ApplicationController
       #button   = [ "Take me to Theme's Website",  @info['theme_uri' ]] if @info['theme_uri']
       button   = [ "Grab this theme",  @info['theme_uri' ]] if @info['theme_uri']
       google_search = search_google_for_theme_info
-      message  = "<a href='#{@info['uri']}'>#{@info['title']}</a> is using "
+      message  = "This site is using "
+      #message  = "<a href='#{@info['uri']}'>#{@info['title']}</a> is using "
       message += "version #{@info['version']} of the " if @info['version']
       if @info['theme_name']
         message += "<a href='#{@info['theme_uri']}'>#{@info['theme_name']}</a> theme" if @info['theme_uri']
