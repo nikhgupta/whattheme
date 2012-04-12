@@ -162,7 +162,7 @@ class ThemesController < ApplicationController
       button   = [ "Grab this theme", @info['author_uri']] if @info['author_uri']
       button   = [ "Grab this theme", @info['theme_uri' ]] if @info['theme_uri']
       button   = [ "Grab this theme", google_search ] if button.blank? and google_search
-      message  = "This site is using "
+      message  = "This site is using the "
       #message  = "<a href='#{@info['uri']}'>#{@info['title']}</a> is using "
       #message += "version #{@info['version']} of the " if @info['version']
       if @info['theme_name']
@@ -185,7 +185,7 @@ class ThemesController < ApplicationController
       message += "<div style='position: absolute; bottom: 30px'>"
       message += "<a href='#{button[1]}' class='button green close' target='_blank'>#{button[0]}</a>" unless button.blank?
       message += "</div>"
-      message += "<small>* we're still in beta. if you find any errors pls email <a href='mailto:whattheme@5minutes.to'>whattheme@5minutes.to</a></small>"
+      message += "<small>* we're in beta. if you find any errors email <a href='mailto:whattheme@tminutes.to'>whattheme@5minutes.to</a></small>"
     else
       message  = case @info["code"]
                  when "not_wordpress"    then "Looks like this site is not using a CMS."
