@@ -166,9 +166,13 @@ class ThemesController < ApplicationController
       #message  = "<a href='#{@info['uri']}'>#{@info['title']}</a> is using "
       #message += "version #{@info['version']} of the " if @info['version']
       if @info['theme_name']
-        message += "<a href='#{@info['theme_uri']}'>#{@info['theme_name']}</a> theme" if @info['theme_uri']
-        message += "<a href='#{google_search}'>#{@info['theme_name']}</a> theme" unless google_search.blank? and @info['author_uri']
-        message += "#{@info['theme_name']} theme" unless @info['theme_uri']
+        if @info['theme_uri']
+          message += "<a href='#{@info['theme_uri']}'>#{@info['theme_name']}</a> theme"
+        elsif (!@info.has_key?('author_uri') or @info['author_uri'].blank?) and google_search.blank?
+          message += "<a href='#{google_search}'>#{@info['theme_name']}</a> theme"
+        elsif (!@info.has_key?('theme_uri') and @info['theme_uri'].blank?)
+          message += "#{@info['theme_name']} theme"
+        end
       end
       if @info['author']
         message += " created by "
