@@ -109,6 +109,7 @@ class ThemesController < ApplicationController
     @info['theme_name'] = "WordPress VIP Services" if @info['theme_name'] == 'vip'
     @info['title'] = @info['title'][0..25] + "&hellip;"
     @info['keywords'] = wp_keyword if @info["success"]
+    @info['theme_uri'] = 
 
     reply_nicely_for_wordpress
   end
@@ -158,16 +159,16 @@ class ThemesController < ApplicationController
   # display a nicely formatted reply - WordPress {{{
   def reply_nicely_for_wordpress
     if @info["success"]
-      #button   = [ "Take me to Author's Website", @info['author_uri']] if @info['author_uri']
-      button   = [ "Grab this theme", @info['author_uri']] if @info['author_uri']
-      #button   = [ "Take me to Theme's Website",  @info['theme_uri' ]] if @info['theme_uri']
-      button   = [ "Grab this theme",  @info['theme_uri' ]] if @info['theme_uri']
       google_search = search_google_for_theme_info
+      button   = [ "Grab this theme", @info['author_uri']] if @info['author_uri']
+      button   = [ "Grab this theme", @info['theme_uri' ]] if @info['theme_uri']
+      button   = [ "Grab this theme", google_search ] if button.blank? and google_search
       message  = "This site is using "
       #message  = "<a href='#{@info['uri']}'>#{@info['title']}</a> is using "
       message += "version #{@info['version']} of the " if @info['version']
       if @info['theme_name']
         message += "<a href='#{@info['theme_uri']}'>#{@info['theme_name']}</a> theme" if @info['theme_uri']
+        message += "<a href='#{google_search}'>#{@info['theme_name']}</a> theme" unless google_search.blank? and @info['author_uri']
         message += "#{@info['theme_name']} theme" unless @info['theme_uri']
       end
       if @info['author']
@@ -180,8 +181,8 @@ class ThemesController < ApplicationController
       #message += "The description for the theme says: #{@info['description']}.<br/><br/>" if @info['description']
       message += "<div style='position: absolute; bottom: 30px'>"
       message += "<a href='#{button[1]}' class='button green close' target='_blank'>#{button[0]}</a>" unless button.blank?
-      message += "<a href='#{google_search}' class='button green close' target='_blank'>Grab this theme</a>" if button.blank? and google_search
       message += "</div>"
+      message += "<small>* we're still in beta. if you find any errors pls email <a href='mailto:whattheme@5minutes.to'>whattheme@5minutes.to</a></small>"
     else
       message  = case @info["code"]
                  when "not_wordpress"    then "Are you sure, the given site is a WordPress blog?"
