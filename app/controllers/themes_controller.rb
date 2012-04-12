@@ -109,7 +109,6 @@ class ThemesController < ApplicationController
     @info['theme_name'] = "WordPress VIP Services" if @info['theme_name'] == 'vip'
     @info['title'] = @info['title'][0..25] + "&hellip;"
     @info['keywords'] = wp_keyword if @info["success"]
-    @info['theme_uri'] = 
 
     reply_nicely_for_wordpress
   end
