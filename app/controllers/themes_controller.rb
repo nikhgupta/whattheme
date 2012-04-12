@@ -164,7 +164,7 @@ class ThemesController < ApplicationController
       button   = [ "Grab this theme", google_search ] if button.blank? and google_search
       message  = "This site is using "
       #message  = "<a href='#{@info['uri']}'>#{@info['title']}</a> is using "
-      message += "version #{@info['version']} of the " if @info['version']
+      #message += "version #{@info['version']} of the " if @info['version']
       if @info['theme_name']
         message += "<a href='#{@info['theme_uri']}'>#{@info['theme_name']}</a> theme" if @info['theme_uri']
         message += "<a href='#{google_search}'>#{@info['theme_name']}</a> theme" unless google_search.blank? and @info['author_uri']
@@ -184,8 +184,8 @@ class ThemesController < ApplicationController
       message += "<small>* we're still in beta. if you find any errors pls email <a href='mailto:whattheme@5minutes.to'>whattheme@5minutes.to</a></small>"
     else
       message  = case @info["code"]
-                 when "not_wordpress"    then "Are you sure, the given site is a WordPress blog?"
-                 when "customized_theme" then "Seems like this WordPress blog is using a customized theme!"
+                 when "not_wordpress"    then "Looks like this site is not using a CMS."
+                 when "customized_theme" then "Looks like this site is using a customized WordPress theme. Here are some flexible WP frameworks you can build your own theme on."
                  end
     end
     @info.merge!({"message" => message})
