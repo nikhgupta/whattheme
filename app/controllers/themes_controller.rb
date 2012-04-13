@@ -11,6 +11,7 @@ class ThemesController < ApplicationController
     begin
       @theme = discover_wp_theme params[:url]
     rescue Exception => e
+      raise e.inspect
       @theme = { "success" => false, "message" => "Encountered an error: #{e.to_s}" }
     end
     render_json @theme, params
@@ -115,7 +116,11 @@ class ThemesController < ApplicationController
   # search for wordpress theme - main method {{{
   def search_for_wp_theme(css)
     return if css.blank?
-    doc = Nokogiri::HTML(open(css)).inner_text
+    begin
+      doc = Nokogiri::HTML(open(css)).inner_text
+    rescue
+      doc = ""
+    end
     match = /\/\*(.*?theme\s*name.*?:.*?)\*\//im.match(doc)
     return if match.blank?
     match.to_s.each_line do |line|
