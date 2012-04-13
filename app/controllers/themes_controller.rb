@@ -16,37 +16,37 @@ class ThemesController < ApplicationController
     render_json @theme, params
   end
 
-  def index
-    @themes = Theme.all
-    render_json @themes, params
-  end
+  #def index
+    #@themes = Theme.all
+    #render_json @themes, params
+  #end
 
-  def show
-    @theme = Theme.find(params[:id])
-    render_json @theme, params
-  end
+  #def show
+    #@theme = Theme.find(params[:id])
+    #render_json @theme, params
+  #end
 
-  def edit
-    @theme = Theme.find(params[:id])
-    render_json @theme, params
-  end
+  #def edit
+    #@theme = Theme.find(params[:id])
+    #render_json @theme, params
+  #end
 
-  def create
-    @theme = Theme.new(params[:theme])
-    render_json @theme, params
-  end
+  #def create
+    #@theme = Theme.new(params[:theme])
+    #render_json @theme, params
+  #end
 
-  def update
-    @theme = Theme.find(params[:id])
-    @theme.update_attributes(params[:theme])
-    render_json @theme, params
-  end
+  #def update
+    #@theme = Theme.find(params[:id])
+    #@theme.update_attributes(params[:theme])
+    #render_json @theme, params
+  #end
 
-  def destroy
-    @theme = Theme.find(params[:id])
-    @theme.destroy
-    render_json @theme, params
-  end
+  #def destroy
+    #@theme = Theme.find(params[:id])
+    #@theme.destroy
+    #render_json @theme, params
+  #end
 
 
 
@@ -106,7 +106,6 @@ class ThemesController < ApplicationController
     end
 
     # make some more changes on the final results we are getting from automated methods
-    @info['theme_name'] = "WordPress VIP Services" if @info['theme_name'] == 'vip'
     @info['title'] = @info['title'][0..25] + "&hellip;"
     @info['keywords'] = wp_keyword if @info["success"]
 
@@ -166,12 +165,17 @@ class ThemesController < ApplicationController
       #message  = "<a href='#{@info['uri']}'>#{@info['title']}</a> is using "
       #message += "version #{@info['version']} of the " if @info['version']
       if @info['theme_name']
-        if @info['theme_uri']
-          message += "<a href='#{@info['theme_uri']}'>#{@info['theme_name']}</a> theme"
-        elsif (!@info.has_key?('author_uri') or @info['author_uri'].blank?) and google_search.blank?
-          message += "<a href='#{google_search}'>#{@info['theme_name']}</a> theme"
-        elsif (!@info.has_key?('theme_uri') and @info['theme_uri'].blank?)
-          message += "#{@info['theme_name']} theme"
+        @info['theme_name'] = "WordPress VIP Services" if @info['theme_name'] == 'vip'
+        if @info['theme_name'] == "vip"
+          message += "<a href='http://vip.wordpress.com/'>WordPress VIP Services"
+        else
+          if @info['theme_uri']
+            message += "<a href='#{@info['theme_uri']}'>#{@info['theme_name']}</a> theme"
+          elsif (!@info.has_key?('author_uri') or @info['author_uri'].blank?) and google_search.blank?
+            message += "<a href='#{google_search}'>#{@info['theme_name']}</a> theme"
+          elsif (!@info.has_key?('theme_uri') and @info['theme_uri'].blank?)
+            message += "#{@info['theme_name']} theme"
+          end
         end
       end
       if @info['author']
