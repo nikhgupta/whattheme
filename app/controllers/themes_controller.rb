@@ -193,8 +193,8 @@ class ThemesController < ApplicationController
       #message += "The description for the theme says: #{@info['description']}.<br/><br/>" if @info['description']
       message += "<div style='position: absolute; bottom: 30px'>"
       message += "<a href='#{button[1]}' class='button green close' target='_blank'>#{button[0]}</a>" unless button.blank?
-      message += "</div>"
       message += "<small>* we're in beta. if you find any errors email <a href='mailto:whattheme@tminutes.to'>whattheme@5minutes.to</a></small>"
+      message += "</div>"
     else
       message  = case @info["code"]
                  when "not_wordpress"    then "Looks like this site is not using a CMS."
