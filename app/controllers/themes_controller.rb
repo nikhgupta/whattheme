@@ -10,7 +10,7 @@ class ThemesController < ApplicationController
   def discover
     begin
       @theme = Theme.find_by_uri(params[:url]) || Theme.new({:uri => params[:url]})
-      @theme.save if @theme.id.nil? or (@theme.updated_at < 7.days.ago)
+      @theme.save if @theme.id.nil? or (@theme.updated_at < 7.days.ago) or params.has_key?("force")
     rescue Exception => e
       #raise e.inspect
       @theme = { "success" => false, "message" => "Encountered an error: #{e.to_s}" }
