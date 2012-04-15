@@ -15,12 +15,17 @@ ActiveRecord::Schema.define(:version => 20120403231519) do
 
   create_table "themes", :force => true do |t|
     t.string   "title"
-    t.text     "url"
+    t.text     "uri"
+    t.string   "theme_name"
+    t.text     "theme_uri"
     t.string   "author"
-    t.text     "author_url"
-    t.text     "description"
-    t.string   "version"
+    t.text     "author_uri"
     t.string   "cms"
+    t.string   "version"
+    t.string   "keywords"
+    t.text     "tags"
+    t.text     "description"
+    t.text     "message"
     t.datetime "created_at",  :null => false
     t.datetime "updated_at",  :null => false
   end
