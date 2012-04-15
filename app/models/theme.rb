@@ -93,15 +93,15 @@ class Theme < ActiveRecord::Base
 
   def search_for_existence_wp(sanitized_url)
     sanitized_url = URI.parse(sanitized_url)
-    loginurl = "#{sanitized_url.scheme}://#{sanitized_url.host}/wp-admin"
+    loginurl = "#{sanitized_url.scheme}://#{sanitized_url.host}/wp-admin/"
     begin
-      open loginurl, 'User-Agent' => @myuseragent
+      html = Nokogiri::HTML(open(loginurl, 'User-Agent' => @myuseragent))
+      html.to_s.include? "Powered by WordPress"
     rescue OpenURI::HTTPError => e
       return false
     rescue Exception => e
       return false
     end
-    true
   end
   # }}}
   # display a nicely formatted reply - WordPress {{{
