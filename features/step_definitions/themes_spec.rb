@@ -1,6 +1,4 @@
-Given /^PENDING/ do
-  pending
-end
+require 'cgi'
 
 Given /^I am on (.*)$/ do |page|
   visit path_to(page)
@@ -15,7 +13,7 @@ Then /^the page should be in "([^"]*)" format$/ do |format|
 end
 
 When /^I discover theme information for "([^"]*)"$/ do |url|
-  visit discover_path(:url => url)
+  visit discover_path(:url => CGI::escape(url))
 end
 
 Then /^the cms discovered should be "([^"]*)"$/ do |cms|

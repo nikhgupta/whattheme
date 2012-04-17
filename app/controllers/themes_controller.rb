@@ -8,12 +8,17 @@ class ThemesController < ApplicationController
   respond_to :json
 
   def discover
-    begin
+    if Rails.env.development?
       @theme = Theme.find_by_uri(params[:url]) || Theme.new({:uri => params[:url]})
-      @theme.save if @theme.id.nil? or (@theme.updated_at < 7.days.ago) or params.has_key?("force")
-    rescue Exception => e
-      #raise e.inspect
-      @theme = { "success" => false, "message" => "Encountered an error: #{e.to_s}" }
+      @theme.save
+    else
+      begin
+        @theme = Theme.find_by_uri(params[:url]) || Theme.new({:uri => params[:url]})
+        @theme.save if @theme.id.nil? or (@theme.updated_at < 7.days.ago) or params.has_key?("force")
+      rescue Exception => e
+        #raise e.inspect
+        @theme = { "success" => false, "message" => "Encountered an error: #{e.to_s}" }
+      end
     end
     render_json @theme, params
   end

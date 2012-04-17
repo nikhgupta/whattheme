@@ -42,6 +42,13 @@ Feature: What Theme
     When I discover theme information for "nikhgupta.com"
     Then the theme discovered should be "1 Quattro"
 
+  @detect @theme @wordpress @real @inner
+  Scenario: Should return theme information for inner pages
+    When I discover theme information for "http://www.prelovac.com/vladimir/"
+    Then the theme discovered should be "Imbue"
+    When I discover theme information for "http://nikhgupta.com/photography/the-green-leaves/"
+    Then the theme discovered should be "1 Quattro"
+
   @detect @theme @wordpress @guess
   Scenario: Should return theme information using Introspection
     When I discover theme information for "wordpress.com"

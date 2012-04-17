@@ -70,10 +70,11 @@ class Theme < ActiveRecord::Base
   def poll_for_wordpress(url,doc)
     begin
       rss = doc.xpath("//link[contains(@type, 'rss')]").first.attr('href').to_s
-      rss = rss.gsub(/\/comments\/feed\/$/, "").gsub(/\/feed\/$/, "")
+      rss = rss.gsub(/\/comments\/feed/, "")
+      rss = rss.gsub(/\/feed/, "")
       loginurl = "#{rss}/wp-admin"
       html = Nokogiri::HTML(open(loginurl, 'User-Agent' => @myuseragent))
-      html.to_s.include? "WordPress"
+      html.to_s.include? "wp-submit"
     rescue OpenURI::HTTPError => e
       return false
     rescue Exception => e
