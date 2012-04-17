@@ -8,25 +8,46 @@ Feature: What Theme
     Given PENDING I am on the home page
     Then  I should see "Documentation"
 
+  @output
   Scenario: JSON should be the default format
     Given I am on the themes page
     Then  the page should be in "json" format
 
+  @detect @cms @unknown
+  Scenario: Should display a clear message when the site does not use a CMS
+    When I discover theme information for "whattheme.net"
+    Then the cms discovered should be "unknown"
+    And  I should see "low key CMS"
+    And  I should see "not using a CMS at all"
+
+  @detect @cms @joomla
+  Scenario: Detect Joomla
+    When I discover theme information for "joomla.org"
+    Then the cms discovered should be "Joomla"
+
+  @detect @cms @drupal
+  Scenario: Detect Drupal
+    When I discover theme information for "drupal.org"
+    Then the cms discovered should be "Drupal"
+
+  @detect @cms @wordpress
+  Scenario: Detect WordPress
+    When I discover theme information for "wordpress.org"
+    Then the cms discovered should be "WordPress"
+    When I discover theme information for "nikhgupta.com"
+    Then the cms discovered should be "WordPress"
+
+  @detect @theme @wordpress @real
   Scenario: Should return theme information using Stylesheets
-    Given I discover theme information for "nikhgupta.com"
-    Then  I should see "Quattro"
+    When I discover theme information for "nikhgupta.com"
+    Then the theme discovered should be "1 Quattro"
 
+  @detect @theme @wordpress @guess
   Scenario: Should return theme information using Introspection
-    Given I discover theme information for "wordpress.com"
-    Then  I should see ":true"
-    Then  I should see "h4"
+    When I discover theme information for "wordpress.com"
+    Then the theme discovered should be "h4"
 
-  Scenario: Should return error state when a theme can not be discovered
-    Given I discover theme information for "wordpress.org"
-    Then  I should see ":false"
-    And   I should see "customized_theme"
-
-  Scenario: Should return error state when we have a non-wordpress based site
-    Given I discover theme information for "whattheme.net"
-    Then  I should see ":false"
-    And   I should see "not_wordpress"
+  @detect @theme @wordpress @unknown
+  Scenario: Should display a fair message when a theme can not be discovered
+    When I discover theme information for "wordpress.org"
+    Then I should see "customized WordPress theme"

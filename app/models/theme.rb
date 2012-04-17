@@ -1,7 +1,110 @@
 class Theme < ActiveRecord::Base
-  before_save :discover_wp_theme
+  before_save :discover_cms
 
   protected
+
+  # Discover CMS {{{
+  def discover_cms
+    # make sure we have a sanitized url
+    url = sanitize_url self.uri
+
+    # use a user-agent string when using Nokogiri for fetching pages
+    @myuseragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.142 Safari/535.19"
+    doc = Nokogiri::HTML(open(url, 'User-Agent' => @myuseragent))
+
+    @cms = {
+      :wordpress => { :name => "WordPress", },
+      :joomla    => { :name => "Joomla" },
+      :drupal    => { :name => "Drupal" },
+    }
+
+    generator = doc.xpath('//meta[@name="generator"]')
+    unless generator.blank?
+      generator = generator.attr("content").text
+      @cms.each do |key,cms|
+        cms_generator_regex = Regexp.new(cms.has_key?(:generator) ? cms[:generator] : cms[:name])
+        return self.discovery_method url, doc, cms if generator =~ cms_generator_regex
+      end
+    end
+
+    @cms.each do |key,cms|
+      cms_method = cms.has_key?(:method) ? cms[:method] : "poll_for_#{cms[:name].downcase}"
+      if self.respond_to?(cms_method)
+        return self.discovery_method url, doc, cms if self.method(cms_method).call(url,doc)
+      end
+    end
+
+    @info = { "success" => true, "uri" => url, "cms" => "unknown" }
+    title = doc.xpath("//title")
+    @info["title"] = title.first.inner_text.to_s unless title.blank?
+    @info['code'] = "unknown"
+    @info['title'] = @info['title'][0..25] + "&hellip;" if @info['title'].length > 26
+    @info['message'] = "This site is either using a low key CMS or not using a CMS at all.
+    <br/>Check out some flexible  WordPress frameworks here."
+
+    self.attributes = @info.keep_if {|key,val| self.has_attribute?(key) }
+  end
+  # }}}
+
+  def discovery_method(url, doc, cms)
+    cms_method = cms.has_key?(:method) ? cms[:method] : "discover_#{cms[:name].downcase}_theme"
+    if self.respond_to?(cms_method)
+      return self.method(cms_method).call(url, doc)
+    else
+      return discover_generic_theme(url,doc,cms)
+    end
+  end
+
+  def discover_generic_theme(url,doc,cms)
+    @info = { "success" => true, "uri" => url, "cms" => cms[:name] }
+    title = doc.xpath("//title")
+    @info["title"] = title.first.inner_text.to_s unless title.blank?
+    @info['code'] = cms[:name].downcase
+    @info['title'] = @info['title'][0..25] + "&hellip;" if @info['title'].length > 26
+    @info['message'] = "This site is using #{cms[:name]} as their main CMS.<br/>
+                        Check out some great #{cms[:name]} themes here."
+
+    self.attributes = @info.keep_if {|key,val| self.has_attribute?(key) }
+  end
+
+  def poll_for_wordpress(url,doc)
+    begin
+      rss = doc.xpath("//link[contains(@type, 'rss')]").first.attr('href').to_s
+      rss = rss.gsub(/\/comments\/feed\/$/, "").gsub(/\/feed\/$/, "")
+      loginurl = "#{rss}/wp-admin"
+      html = Nokogiri::HTML(open(loginurl, 'User-Agent' => @myuseragent))
+      html.to_s.include? "WordPress"
+    rescue OpenURI::HTTPError => e
+      return false
+    rescue Exception => e
+      return false
+    end
+  end
+  def poll_for_joomla(url,doc)
+    begin
+      base = doc.xpath("//base").first.attr('href').to_s
+      loginurl = "#{base}/templates/system/css/system.css"
+      html = Nokogiri::HTML(open(loginurl, 'User-Agent' => @myuseragent))
+      html.to_s.include? "System Messages"
+    rescue OpenURI::HTTPError => e
+      return false
+    rescue Exception => e
+      return false
+    end
+  end
+  def poll_for_drupal(url,doc)
+    begin
+      html = Nokogiri::HTML(open("#{url}/misc/drupal.js", 'User-Agent' => @myuseragent))
+      return true if html.to_s.include? "Drupal"
+      html = Nokogiri::HTML(open("#{URI.parse(url).host}/misc/drupal.js", "User-Agent" => @myuseragent))
+      return true if html.to_s.include? "Drupal"
+    rescue OpenURI::HTTPError => e
+      return false
+    rescue Exception => e
+      return false
+    end
+  end
+
   # Discover WordPress Theme {{{
   # This function discovers the theme for a given WordPress website.
   # Right now, it is custom tailored to use WordPress websites and
@@ -18,17 +121,10 @@ class Theme < ActiveRecord::Base
   #   - +IndeterminateError+ -> theme could not be identified
   #   - +NotWordPressError+ -> the given url is not a WordPress based url
   # Discover for WordPress theme - Process {{{
-  def discover_wp_theme
-    # make sure we have a sanitized url
-    url = sanitize_url self.uri
-
-    # use a user-agent string when using Nokogiri for fetching pages
-    @myuseragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.142 Safari/535.19"
-    doc = Nokogiri::HTML(open(url, 'User-Agent' => @myuseragent))
-
-    @info = {"success" => true, "uri" => url}
-    title = doc.xpath("//title").first
-    @info["title"] = title.inner_text.to_s unless title.blank?
+  def discover_wordpress_theme(url, doc)
+    @info = {"success" => true, "uri" => url, "cms" => "WordPress" }
+    title = doc.xpath("//title")
+    @info["title"] = title.first.inner_text.to_s unless title.blank?
 
     # search for all CSS links on this page
     styles = doc.css('link[type="text/css"]')
@@ -45,8 +141,7 @@ class Theme < ActiveRecord::Base
     # if we still do not have theme information, return error state
     unless wp_theme_found?
       @info["success"] = false
-      @info["code"]    = "not_wordpress"
-      @info["code"]    = "customized_theme" if search_for_existence_wp url
+      @info["code"]    = "customized_theme"
     end
 
     # make some more changes on the final results we are getting from automated methods
@@ -72,7 +167,6 @@ class Theme < ActiveRecord::Base
       line = line.split(':', 2).map { |x| x.strip }
       @info[line[0].gsub(' ','_').downcase] = line[1] unless line[1].blank?
     end
-    @info["cms"] = "WordPress"
   end
   # }}}
   # search for wordpress theme - introspection method {{{
@@ -85,24 +179,11 @@ class Theme < ActiveRecord::Base
       @info.merge!({
         "success"    => true,
         "theme_name" => match[1].to_s,
-        "cms"        => "WordPress",
         "method"     => "introspection",
       })
     end
   end
 
-  def search_for_existence_wp(sanitized_url)
-    sanitized_url = URI.parse(sanitized_url)
-    loginurl = "#{sanitized_url.scheme}://#{sanitized_url.host}/wp-admin/"
-    begin
-      html = Nokogiri::HTML(open(loginurl, 'User-Agent' => @myuseragent))
-      html.to_s.include? "Powered by WordPress"
-    rescue OpenURI::HTTPError => e
-      return false
-    rescue Exception => e
-      return false
-    end
-  end
   # }}}
   # display a nicely formatted reply - WordPress {{{
   def reply_nicely_for_wordpress
