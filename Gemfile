@@ -37,30 +37,33 @@ gem 'jquery-rails'
 # gems needed to run this application
 gem 'nokogiri'
 
-group :test do
-  gem 'cucumber-rails', require: false
-end
-
-group :production do
-  gem 'pg'
-end
-
-group :test, :development do
-  gem 'mysql2'
+group :development do
   gem 'heroku'
   gem "taps"
   gem 'turn'
   gem 'haml-rails'
-  gem 'rspec-rails'
-  gem 'pickle'
-  gem 'factory_girl_rails'
-  gem 'capybara'
-  gem 'capybara-webkit'
-  gem 'database_cleaner'
   gem 'guard-rspec'
   gem 'guard-cucumber'
 # gem 'guard-unicorn'
   gem 'ruby_gntp'
   gem 'minitest'
   gem 'launchy'
+end
+
+group :production do
+  gem 'pg'
+end
+
+group :test do
+  gem 'rake'
+  gem 'cucumber-rails', :require => false
+end
+
+group :test, :development do
+  gem 'mysql2'
+  gem 'rspec-rails'
+  gem 'capybara'
+  gem 'capybara-webkit'
+  gem 'database_cleaner'
+  gem 'factory_girl_rails'
 end

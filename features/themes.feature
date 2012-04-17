@@ -3,10 +3,10 @@ Feature: What Theme
   As a developer
   I need to provide an api for requesting information about themes
 
-  @pending
-  Scenario: API Home should list Documentation for API
-    Given PENDING I am on the home page
-    Then  I should see "Documentation"
+  #@pending
+  #Scenario: API Home should list Documentation for API
+    #Given PENDING I am on the home page
+    #Then  I should see "Documentation"
 
   @output
   Scenario: JSON should be the default format

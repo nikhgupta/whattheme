@@ -113,9 +113,6 @@ GEM
     netrc (0.7.1)
     nokogiri (1.5.2)
     pg (0.13.2)
-    pickle (0.4.10)
-      cucumber (>= 0.8)
-      rake
     polyglot (0.3.3)
     rack (1.4.1)
     rack-cache (1.2)
@@ -220,8 +217,8 @@ DEPENDENCIES
   mysql2
   nokogiri
   pg
-  pickle
   rails (= 3.2.2)
+  rake
   rspec-rails
   ruby_gntp
   sass-rails (~> 3.2.3)
